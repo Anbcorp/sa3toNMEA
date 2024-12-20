@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -33,27 +32,22 @@ func main() {
 		Timestamp: time.Now().UTC(),
 	}
 
-	upd := runners.NewUpdater(6, &b, new(sync.RWMutex))
+	mutex := new(sync.RWMutex)
+	upd := runners.NewUpdater(60, &b, mutex)
+	ded := runners.NewDeadrecker(1, &b, mutex)
+	//view := runners.NewViewer(1, &b, mutex)
+
+	defer upd.Stop()
+	//defer view.Stop()
+	defer ded.Stop()
 
 	go upd.Run()
+	//go view.Run()
+	go ded.Run()
 
-	viewer := runners.NewTask(1)
-
-	go func() {
-		for {
-			select {
-			case <-viewer.Done:
-				viewer.Ticker.Stop()
-				return
-			case <-viewer.Ticker.C:
-				fmt.Println(time.Now(), upd.Boat.Cog)
-			}
-		}
-	}()
-
-	time.Sleep(120 * time.Second)
-	upd.Stop()
-	viewer.Done <- true
+	srv := runners.NewServer(3, &b, mutex)
+	defer srv.Stop()
+	srv.Start()
 }
 
 func realmain() {

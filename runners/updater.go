@@ -1,7 +1,7 @@
 package runners
 
 import (
-	"fmt"
+	"log"
 	"sync"
 
 	nmea "github.com/Anbcorp/sa_nmea"
@@ -28,7 +28,7 @@ func (upd Updater) Update() {
 	newCog := int(upd.Boat.Cog+45) % 360
 	upd.Boat.Hdg = float64(newHdg)
 	upd.Boat.Cog = float64(newCog)
-	fmt.Println(upd.Boat.Cog)
+	log.Printf("Update: %d\n", int(upd.Boat.Cog))
 	upd.mutex.Unlock()
 }
 
