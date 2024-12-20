@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/Anbcorp/sa3toNMEA/runners"
 	nmea "github.com/Anbcorp/sa_nmea"
 	"github.com/tidwall/geodesic"
 )
@@ -16,6 +18,45 @@ type client struct {
 }
 
 func main() {
+	b := nmea.NMEABoat{
+		Hdg: 279,
+		Spd: 28.2,
+		Cog: 281,
+		Sog: 28.2,
+		Tws: 13.7,
+		//Twd:          238,
+		Twa:       -41,
+		Awa:       -26,
+		Aws:       20.7,
+		Latitude:  46.5086619986689,
+		Longitude: -9.57924805707325,
+		Timestamp: time.Now().UTC(),
+	}
+
+	upd := runners.NewUpdater(6, &b, new(sync.RWMutex))
+
+	go upd.Run()
+
+	viewer := runners.NewTask(1)
+
+	go func() {
+		for {
+			select {
+			case <-viewer.Done:
+				viewer.Ticker.Stop()
+				return
+			case <-viewer.Ticker.C:
+				fmt.Println(time.Now(), upd.Boat.Cog)
+			}
+		}
+	}()
+
+	time.Sleep(120 * time.Second)
+	upd.Stop()
+	viewer.Done <- true
+}
+
+func realmain() {
 	b := nmea.NMEABoat{
 		Hdg: 279,
 		Spd: 28.2,
